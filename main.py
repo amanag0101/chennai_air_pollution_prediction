@@ -6,6 +6,8 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import Ridge
 
 
 # visualize correlation between pollutant and aqi using scatter plot
@@ -62,6 +64,7 @@ def encode_labels(y):
 # train the model
 def train_linear_regression(X, y):
     model = LinearRegression()
+    # model = Ridge(alpha=1.0)
     model.fit(X, y)
     return model
 
@@ -115,6 +118,7 @@ if __name__ == "__main__":
     pm2_5 = csvFile["PM2.5"]
     no2 = csvFile["NO2"]
     # nh3 = csvFile["NH3"]
+    co = csvFile["CO"]
     # so2 = csvFile["SO2"]
     o3 = csvFile["O3"]
     aqi = csvFile["AQI"]
@@ -122,7 +126,8 @@ if __name__ == "__main__":
     aqi_bucket_class = encode_labels(aqi_bucket)
 
     # create a dataframe with independent variables
-    X = pd.DataFrame({"PM2.5": pm2_5, "NO2": no2, "NH3": nh3, "SO2": so2, "O3": o3})
+    # X = pd.DataFrame({"PM2.5": pm2_5, "NO2": no2, "NH3": nh3, "CO": co, "SO2": so2, "O3": o3})
+    X = pd.DataFrame({"PM2.5": pm2_5, "NO2": no2, "CO": co, "O3": o3})
 
     # impute missing values in X
     X_imputed = impute_missing_values(X)
@@ -137,6 +142,10 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = train_test_split(
         X_dropped, y_dropped, test_size=0.30
     )
+
+    scaler = StandardScaler()
+    # X_train_scaled = scaler.fit_transform(X_train)
+    # X_test_scaled = scaler.transform(X_test)
 
     # get the coefficients
     model = train_linear_regression(X_train, y_train)
