@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -94,6 +94,17 @@ def get_class_output(y, y_pred):
         {"y_pred_class": y_pred_class}
     )
 
+def get_accuracy(y_pred, y_test):
+    y_pred = y_pred.to_numpy()
+    y_test = y_test.to_numpy()
+
+    c = 0
+    for i in range(len(y_pred)):
+        if(get_class(y_pred[i]) == get_class(y_test[i])):
+            c += 1
+
+    return((c / len(y_pred)) * 100)
+
 
 def get_class(value):
     if value >= 0 and value <= 50:
@@ -117,47 +128,51 @@ if __name__ == "__main__":
     # get column wise values from the csv file
     pm2_5 = csvFile["PM2.5"]
     no2 = csvFile["NO2"]
-    # nh3 = csvFile["NH3"]
     co = csvFile["CO"]
-    # so2 = csvFile["SO2"]
-    o3 = csvFile["O3"]
     aqi = csvFile["AQI"]
     aqi_bucket = csvFile["AQI_Bucket"]
     aqi_bucket_class = encode_labels(aqi_bucket)
 
     # create a dataframe with independent variables
     # X = pd.DataFrame({"PM2.5": pm2_5, "NO2": no2, "NH3": nh3, "CO": co, "SO2": so2, "O3": o3})
-    X = pd.DataFrame({"PM2.5": pm2_5, "NO2": no2, "CO": co, "O3": o3})
+    X = pd.DataFrame({"PM2.5": pm2_5, "CO": co, "NO2": no2})
 
     # impute missing values in X
-    X_imputed = impute_missing_values(X)
+    # X_imputed = impute_missing_values(X)
+
     # create a series with dependent variable
     y = aqi
 
     # drop the empty data rows
-    y_dropped = y.dropna()
-    X_dropped = X_imputed.loc[y_dropped.index]
+    # y_dropped = y.dropna()
+    # X_dropped = X_imputed.loc[y_dropped.index]
 
     # split the dataset into train set and test set
     X_train, X_test, y_train, y_test = train_test_split(
-        X_dropped, y_dropped, test_size=0.30
+        X, y, test_size=0.30, random_state=101
     )
 
-    scaler = StandardScaler()
+    # scaler = StandardScaler()
     # X_train_scaled = scaler.fit_transform(X_train)
     # X_test_scaled = scaler.transform(X_test)
 
     # get the coefficients
     model = train_linear_regression(X_train, y_train)
-    print(model.coef_)
+    print("Coefficients: " + str(model.coef_))
+    print("Intercept: " + str(model.intercept_))
 
     # calculate the mean squared error on the test data
     mse = test_linear_regression(X_test, y_test, model)
-    print(mse)
+    print("MSE: " + str(np.sqrt(mse)))
 
     # make predictions on the test data
     y_pred = predict_linear_regression(X_test, model)
     y_pred = pd.DataFrame({"Y_Pred": y_pred})
+
+    # scatter_plot(y_test, y_pred, "test", "pred")
+
+    accuracy = get_accuracy(y_pred, y_test)
+    print("Accuracy: " + str(accuracy) + "%")
 
     # y_class, y_pred_class = get_class_output(y_test, y_pred)
 
